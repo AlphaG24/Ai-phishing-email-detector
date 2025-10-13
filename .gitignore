@@ -1,27 +1,56 @@
-# Python cache files
+# ------------------------------
+# Python cache & compiled files
+# ------------------------------
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
-# Virtual environment
+# ------------------------------
+# Virtual environments
+# ------------------------------
 venv/
 env/
 .venv/
 
+# ------------------------------
 # Jupyter / IPython
+# ------------------------------
 .ipynb_checkpoints
 
+# ------------------------------
 # Logs
+# ------------------------------
 *.log
 
-# OS files
+# ------------------------------
+# OS-specific files
+# ------------------------------
 .DS_Store
 Thumbs.db
 
-# Feedback data (user data)
+# ------------------------------
+# Feedback / sensitive user data
+# ------------------------------
 feedback_data.csv
 
-# Model artifacts (optional: if large, can use Git LFS)
+# ------------------------------
+# Models / large binary artifacts
+# ------------------------------
 models/final/*.joblib
 models/embeddings.pkl
+
+# ------------------------------
+# IDE / editor configs (optional)
+# ------------------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# ------------------------------
+# Temporary / scratch files
+# ------------------------------
+*.tmp
+*.bak
+*.swp
