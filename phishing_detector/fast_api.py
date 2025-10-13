@@ -13,6 +13,10 @@ from typing import List, Dict, Any
 from contextlib import asynccontextmanager
 import io
 import re
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 # --- Import custom modules from src ---
 try:
@@ -221,7 +225,7 @@ async def bulk_upload_file(file: UploadFile = File(...)):
                 })
             except Exception as e:
                 # log and continue (don't break whole job)
-                print(f"⚠️ Error processing email {i}: {e}")
+                logger.warning(f"⚠️ Error processing email {i}: {e}")
                 continue
 
         return {
@@ -271,7 +275,7 @@ async def bulk_predict(data: BulkEmailInput):
                 "features": advanced_features_dict
             })
         except Exception as e:
-            print(f"⚠️ Error processing pasted email {i}: {e}")
+            logger.warning(f"⚠️ Error processing email {i}: {e}")
             continue
 
     return {
@@ -290,4 +294,4 @@ async def health_check():
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=5000)
+    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
