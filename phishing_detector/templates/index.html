@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <title>AI Phishing Detector | Professional Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #F3F4F6;
+            --color-panel: #FFFFFF;
+            --color-primary: #3B82F6;
+            --color-secondary: #F97316;
+            --color-safe: #10B981;
+            --color-text-header: #111827;
+            --color-text-body: #374151;
+            --color-text-muted: #6B7280;
+            --font-primary: 'Poppins', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
+        }
+        body { background-color: var(--color-bg); color: var(--color-text-body); font-family: var(--font-primary); }
+        .normal-panel { background-color: var(--color-panel); border: 1px solid #E5E7EB; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); }
+        .normal-textarea { background-color: #F9FAFB; border: 1px solid #D1D5DB; font-family: var(--font-mono); transition: all 0.3s ease; }
+        .normal-textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3); background-color: #FFFFFF; }
+        .normal-button { background-color: var(--color-primary); color: white; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; transition: all 0.3s ease; border-radius: 0.375rem; }
+        .normal-button:hover { background-color: #2563EB; box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.39); }
+        .normal-button-alert { background-color: var(--color-secondary); }
+        .normal-button-alert:hover { background-color: #EA580C; box-shadow: 0 4px 14px 0 rgba(249, 115, 22, 0.39); }
+        .normal-button-safe { background-color: var(--color-safe); }
+        .normal-button-safe:hover { background-color: #059669; box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39); }
+        .normal-button-secondary { background-color: #6B7280; }
+        .normal-button-secondary:hover { background-color: #4B5563; box-shadow: 0 4px 14px 0 rgba(107, 114, 128, 0.39); }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .verdict-circle { position: relative; width: 200px; height: 200px; }
+        .verdict-circle svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+        .progress-ring-circle { transition: stroke-dashoffset 0.8s ease-out; }
+        .verdict-circle-text-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        .phishing-border { border-color: var(--color-secondary); }
+        .safe-border { border-color: var(--color-safe); }
+        .interactive-email-body { font-family: var(--font-mono); white-space: pre-wrap; word-break: break-all; background-color: #F9FAFB; border: 1px solid #E5E7EB; max-height: 400px; overflow-y: auto; }
+        .highlight { position: relative; cursor: help; }
+        .highlight-sender { background-color: rgba(249, 115, 22, 0.2); border-bottom: 2px solid var(--color-secondary); }
+        .highlight-link { background-color: rgba(239, 68, 68, 0.2); border-bottom: 2px solid #EF4444; }
+        .highlight-urgency { background-color: rgba(250, 204, 21, 0.3); border-bottom: 2px solid #F59E0B; }
+        .highlight::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background-color: #111827; color: white; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-family: var(--font-primary); white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; z-index: 20; margin-bottom: 8px; }
+        .highlight:hover::after { opacity: 1; visibility: visible; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #E5E7EB; }
+        ::-webkit-scrollbar-thumb { background-color: var(--color-primary); border-radius: 4px; }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+
+    <header class="text-center mb-10 flex flex-col items-center justify-center">
+        <h1 class="text-4xl font-bold text-gray-800" style="font-family: var(--font-primary);">
+            <span style="color: var(--color-primary);">AI</span> Phishing Detector
+        </h1>
+        <p class="mt-2 text-sm text-gray-500 font-mono">Analysis Engine v2.0</p>
+    </header>
+
+    <main class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+        <div class="lg:col-span-2 normal-panel rounded-lg p-6 flex flex-col">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h4M8 7a2 2 0 012-2h4a2 2 0 012 2v8a2 2 0 01-2 2h-4a2 2 0 01-2-2V7z" /></svg>
+                Email Input
+            </h2>
+            <textarea id="email-content" rows="15" class="w-full p-4 rounded-md normal-textarea text-sm flex-grow" placeholder="Paste the raw email content here..."></textarea>
+            <div class="flex gap-4 mt-6">
+                <button onclick="analyzeEmail()" class="w-full py-3 text-base font-semibold normal-button">Initiate Scan</button>
+                <button onclick="clearAll()" class="w-full py-3 text-base font-semibold normal-button normal-button-secondary">Clear</button>
+            </div>
+             <p id="loading-message" class="text-center mt-3 text-sm font-semibold hidden" style="color: var(--color-primary);"><span id="loading-text"></span></p>
+        </div>
+
+        <div class="lg:col-span-3 normal-panel rounded-lg p-6">
+            <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                Analysis Output
+            </h2>
+            <div id="results-panel" class="transition duration-500 ease-in-out">
+                <div id="initial-message" class="min-h-[450px] flex items-center justify-center p-4">
+                    <p class="text-gray-500 text-lg text-center">Results will be displayed here.<br>Paste an email and click "Initiate Scan".</p>
+                </div>
+                <div id="analysis-content" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-1 flex flex-col items-center">
+                            <div id="verdict-display"></div>
+                            <div class="mt-6 w-full bg-gray-50 p-4 rounded-md">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3 text-center">Feature Indicators</h3>
+                                <div id="feature-indicators" class="text-sm space-y-2 font-mono"></div>
+                            </div>
+                        </div>
+                        <div class="md:col-span-2">
+                            <h3 class="text-lg font-semibold text-gray-700 mb-3">Interactive Analysis</h3>
+                            <div id="interactive-analysis-panel" class="interactive-email-body p-4 rounded-md text-xs"></div>
+                            <div class="mt-4 bg-gray-50 p-4 rounded-md">
+                                <h3 class="text-lg font-semibold text-gray-700 mb-3">AI Reasoning</h3>
+                                <ul id="explanation-list" class="text-sm space-y-2 text-gray-600"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="lg:col-span-5 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 normal-panel rounded-lg p-6">
+                <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                    Bulk Processing
+                </h2>
+                <div class="mb-4">
+                    <label for="bulk-file" class="block text-sm font-semibold text-gray-600 mb-2">Upload Batch File (.txt, .csv)</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                        <input type="file" id="bulk-file" accept=".txt,.csv" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 hover:file:bg-blue-100" style="color: var(--color-primary);">
+                        <button onclick="analyzeBulkFile()" class="mt-3 w-full py-2 text-sm normal-button">Scan File</button>
+                    </div>
+                </div>
+                <div>
+                     <label for="bulk-emails" class="block text-sm font-semibold text-gray-600 mb-2">Paste Multiple Emails</label>
+                    <textarea id="bulk-emails" rows="5" class="w-full p-4 rounded-md normal-textarea text-sm" placeholder="Paste one email per line or separated by blank lines..."></textarea>
+                    <button onclick="analyzeBulkEmails()" class="mt-3 w-full py-2 text-sm normal-button">Scan Pasted Text</button>
+                </div>
+                <div id="bulk-results" class="mt-4 hidden">
+                    <div id="bulk-results-content" class="bg-gray-50 p-4 rounded-md max-h-96 overflow-y-auto"></div>
+                </div>
+            </div>
+
+            <div class="md:col-span-1 normal-panel rounded-lg p-6 flex flex-col">
+                <h2 class="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" style="color: var(--color-primary);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg>
+                    Action & Feedback
+                </h2>
+                <div class="flex-grow flex flex-col justify-center">
+                    <p id="feedback-prompt" class="text-sm text-gray-600 mb-4 text-center">Report an incorrect analysis to improve the AI model.</p>
+                    <div id="feedback-buttons" class="space-y-4">
+                        <button onclick="sendFeedback(1)" class="w-full py-3 normal-button normal-button-alert">Report Phishing</button>
+                        <button onclick="sendFeedback(0)" class="w-full py-3 normal-button normal-button-safe">Mark as Safe</button>
+                    </div>
+                    <p id="feedback-message" class="text-sm font-semibold text-center hidden"></p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="max-w-7xl mx-auto mt-10 text-center text-gray-500 text-xs font-mono">
+        <p>AI Phishing Detector | Analysis Engine v2.0 | Status: <span class="text-green-600">Online</span></p>
+    </footer>
+
+    <script>
+    const API_URL = 'http://127.0.0.1:5000/predict';
+    const FEEDBACK_URL = 'http://127.0.0.1:5000/feedback';
+    const BULK_API_URL = 'http://127.0.0.1:5000/bulk_predict';
+    const BULK_UPLOAD_URL = 'http://127.0.0.1:5000/bulk_upload';
+    
+    let lastEmailText = '';
+    
+    function animateProgress(percent, isPhishing) {
+        const circle = document.querySelector('.progress-ring-circle');
+        if (!circle) return;
+        const radius = circle.r.baseVal.value;
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (percent / 100) * circumference;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        setTimeout(() => {
+            circle.style.strokeDashoffset = offset;
+            circle.style.stroke = isPhishing ? 'var(--color-secondary)' : 'var(--color-safe)';
+        }, 100);
+    }
+
+    async function analyzeEmail() {
+        const emailContent = document.getElementById('email-content').value;
+        const initialMessage = document.getElementById('initial-message');
+        const subjectCount = (emailContent.match(/Subject:/gi) || []).length;
+        if (subjectCount > 1) {
+            initialMessage.innerHTML = `<p class="font-semibold text-orange-500 text-center">Multiple emails detected.<br>Please use the Bulk Processing section.</p>`;
+            return;
+        }
+        lastEmailText = emailContent; 
+        const loadingMessage = document.getElementById('loading-message');
+        const loadingText = document.getElementById('loading-text');
+        const analysisContent = document.getElementById('analysis-content');
+        if (!emailContent) {
+            initialMessage.innerHTML = `<p class="font-semibold text-orange-500">Please paste an email to analyze.</p>`;
+            return;
+        }
+        loadingMessage.classList.remove('hidden');
+        loadingText.textContent = "Analyzing...";
+        initialMessage.classList.remove('hidden');
+        initialMessage.innerHTML = `<p class="text-gray-500 text-lg">Processing...</p>`;
+        analysisContent.classList.add('hidden');
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email_text: emailContent }),
+            });
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            displayResults(data);
+        } catch (error) {
+            console.error('Analysis failed:', error);
+            initialMessage.innerHTML = `<div class="text-center"><p class="text-lg font-semibold text-red-500">Analysis Failed</p><p class="text-sm text-gray-500 mt-2">Could not connect to the analysis engine.</p><p class="text-xs text-gray-400 mt-1">Ensure server is running at http://127.0.0.1:5000.</p></div>`;
+        } finally {
+            loadingMessage.classList.add('hidden');
+        }
+    }
+
+    function displayResults(data) {
+        const initialMessage = document.getElementById('initial-message');
+        const analysisContent = document.getElementById('analysis-content');
+        const verdictDisplay = document.getElementById('verdict-display');
+        const featureIndicators = document.getElementById('feature-indicators');
+        const explanationList = document.getElementById('explanation-list');
+        const isPhishing = data.prediction && data.prediction.includes("PHISHING");
+        const verdictBorderClass = isPhishing ? 'phishing-border' : 'safe-border';
+        const verdictTextClass = isPhishing ? 'text-orange-600' : 'text-green-600';
+        const verdictIconColor = isPhishing ? 'var(--color-secondary)' : 'var(--color-safe)';
+        const verdictText = isPhishing ? 'PHISHING ALERT' : 'Likely Safe';
+        const confidence = data.confidence * 100;
+        const phishingIcon = `<svg class="h-8 w-8 mb-1" style="color:${verdictIconColor}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>`;
+        const safeIcon = `<svg class="h-8 w-8 mb-1" style="color:${verdictIconColor}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.286zm0 13.036h.008v.008h-.008v-.008z" /></svg>`;
+        verdictDisplay.innerHTML = `<div class="verdict-circle flex items-center justify-center rounded-full border-4 ${verdictBorderClass} bg-gray-50 transition-all duration-500"><svg class="w-full h-full" viewBox="0 0 100 100"><circle class="text-gray-200" stroke-width="5" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" /><circle class="progress-ring-circle" stroke-width="5" stroke-linecap="round" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" /></svg><div class="verdict-circle-text-container fade-in">${isPhishing ? phishingIcon : safeIcon}<h3 class="text-xl font-bold ${verdictTextClass}">${verdictText}</h3><p class="text-lg mt-1 font-mono text-gray-700">${confidence.toFixed(1)}%</p><p class="text-xs text-gray-500">CONFIDENCE</p></div></div>`;
+        animateProgress(confidence, isPhishing);
+
+        featureIndicators.innerHTML = '';
+        Object.entries(data.input_features || {}).forEach(([key, value]) => {
+            let statusIcon, statusText, textColor;
+            if (key === 'num_urls') {
+                statusIcon = value > 0 ? '🔗' : '✅'; statusText = `${value} URL(s)`; textColor = 'text-yellow-600';
+            } else if (value === 1) {
+                statusIcon = '🚨'; statusText = 'Triggered'; textColor = 'text-red-600';
+            } else {
+                statusIcon = '✅'; statusText = 'Nominal'; textColor = 'text-green-600';
+            }
+            featureIndicators.innerHTML += `<div class="grid grid-cols-2 items-center gap-4 text-xs"><span class="text-gray-500 truncate">${key.toUpperCase().replace(/_/g, ' ')}:</span><span class="flex items-center gap-2 font-semibold ${textColor} justify-self-end">${statusIcon} ${statusText}</span></div>`;
+        });
+        explanationList.innerHTML = (data.explanation || []).map(reason => `<li><span class="mr-2" style="color:var(--color-primary);">&gt;</span>${reason}</li>`).join('');
+        renderInteractiveEmail(lastEmailText, data.details);
+        initialMessage.classList.add('hidden');
+        analysisContent.classList.remove('hidden');
+        analysisContent.classList.add('fade-in');
+    }
+
+    function renderInteractiveEmail(emailText, details) {
+        const panel = document.getElementById('interactive-analysis-panel');
+        let sanitizedHtml = emailText.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        if (!details) {
+            details = { suspicious_links: [], sender_mismatch: null, urgency_keywords: [] };
+        }
+        if (details.sender_mismatch) {
+            const fromRegex = new RegExp(`(From:\\s*${details.sender_mismatch.name}.*${details.sender_mismatch.from})`, 'gi');
+            sanitizedHtml = sanitizedHtml.replace(fromRegex, `<span class="highlight highlight-sender" data-tooltip="Sender name may be impersonating a trusted source.">$1</span>`);
+        }
+        (details.suspicious_links || []).forEach(link => {
+            const linkRegex = new RegExp(link.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+            sanitizedHtml = sanitizedHtml.replace(linkRegex, `<span class="highlight highlight-link" data-tooltip="This link leads to an untrusted domain.">${link}</span>`);
+        });
+        (details.urgency_keywords || []).forEach(word => {
+            const wordRegex = new RegExp(`\\b${word}\\b`, 'gi');
+            sanitizedHtml = sanitizedHtml.replace(wordRegex, `<span class="highlight highlight-urgency" data-tooltip="This word creates false urgency, a common phishing tactic.">$&</span>`);
+        });
+        panel.innerHTML = sanitizedHtml;
+    }
+    
+    async function sendFeedback(correctLabel) {
+        const feedbackMessage = document.getElementById('feedback-message');
+        const feedbackButtons = document.getElementById('feedback-buttons');
+        const feedbackPrompt = document.getElementById('feedback-prompt');
+
+        if (!lastEmailText) {
+            feedbackPrompt.textContent = 'Please analyze an email first.';
+            feedbackPrompt.style.color = '#F97316';
+            return;
+        }
+
+        feedbackButtons.classList.add('hidden');
+        feedbackPrompt.classList.add('hidden');
+        feedbackMessage.classList.remove('hidden');
+        feedbackMessage.textContent = 'Submitting feedback...';
+        feedbackMessage.className = 'text-sm font-semibold text-center';
+        feedbackMessage.style.color = 'var(--color-primary)';
+        
+        try {
+            const response = await fetch(FEEDBACK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email_text: lastEmailText, label: correctLabel }),
+            });
+            const data = await response.json();
+            if (response.ok && data.status === 'success') {
+                feedbackMessage.textContent = '✅ Feedback Logged. Thank you!';
+                feedbackMessage.style.color = 'var(--color-safe)';
+            } else {
+                throw new Error(data.message || 'Server error');
+            }
+        } catch (error) {
+            feedbackMessage.textContent = `❌ Error: ${error.message}`;
+            feedbackMessage.style.color = '#EF4444';
+        }
+    }
+    
+    async function analyzeBulkFile() {
+        const fileInput = document.getElementById('bulk-file');
+        const file = fileInput.files[0];
+        if (!file) { alert('Please select a file for batch analysis.'); return; }
+
+        const bulkResults = document.getElementById('bulk-results');
+        const bulkContent = document.getElementById('bulk-results-content');
+        bulkContent.innerHTML = '<p class="text-gray-500">Processing file...</p>';
+        bulkResults.classList.remove('hidden');
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch(BULK_UPLOAD_URL, { method: 'POST', body: formData });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            displayBulkResults(data, `File: ${data.filename}`);
+        } catch (error) {
+            bulkContent.innerHTML = `<p class="text-red-500">File analysis failed: ${error.message}</p>`;
+        }
+    }
+
+    async function analyzeBulkEmails() {
+        const bulkText = document.getElementById('bulk-emails').value.trim();
+        if (!bulkText) { alert('Please paste email data for batch analysis.'); return; }
+        
+        const bulkResults = document.getElementById('bulk-results');
+        const bulkContent = document.getElementById('bulk-results-content');
+        bulkResults.classList.remove('hidden');
+
+        let emails = bulkText.split(/(?=^Subject:)/m).map(s => s.trim()).filter(Boolean);
+        if (emails.length <= 1) {
+            emails = bulkText.split(/\n\s*\n+/).map(s => s.trim()).filter(Boolean);
+        }
+        if (emails.length === 0) {
+            emails = bulkText.split('\n').map(s => s.trim()).filter(Boolean);
+        }
+
+        if (emails.length === 0) { alert('No valid emails found in the pasted text.'); return; }
+        
+        bulkContent.innerHTML = `<p class="text-gray-500">Processing ${emails.length} entries...</p>`;
+
+        try {
+            const response = await fetch(BULK_API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ emails }),
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            displayBulkResults(data, 'Pasted Entries');
+        } catch (error) {
+            bulkContent.innerHTML = `<p class="text-red-500">Bulk analysis failed: ${error.message}</p>`;
+        }
+    }
+
+    function displayBulkResults(data, source) {
+        const bulkContent = document.getElementById('bulk-results-content');
+        let resultsHtml = `
+            <div class="mb-4 p-3 bg-gray-100 rounded-md text-sm">
+                <strong>Source:</strong> ${source}<br>
+                <strong>Summary:</strong> ${data.total_processed} processed | 
+                <span class="font-bold text-orange-600">${data.phishing_count} Phishing</span> | 
+                <span class="font-bold text-green-600">${data.legitimate_count} Legitimate</span>
+            </div>
+            <div class="space-y-2">`;
+        
+        data.results.forEach((result, index) => {
+            const badgeClass = result.prediction === 'PHISHING' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800';
+            const confidencePercent = (result.confidence * 100).toFixed(1);
+            
+            resultsHtml += `
+                <div class="border-t border-gray-200 py-2 flex justify-between items-center text-sm">
+                    <div>
+                        <div class="font-bold text-gray-700">Entry ${index + 1}</div>
+                        <div class="text-xs text-gray-500 truncate max-w-xs">${result.email_preview}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="${badgeClass} px-2 py-1 rounded-md text-xs font-bold">${result.prediction}</span>
+                        <div class="text-xs text-gray-500 mt-1">${confidencePercent}%</div>
+                    </div>
+                </div>`;
+        });
+        
+        resultsHtml += `</div>`;
+        bulkContent.innerHTML = resultsHtml;
+    }
+
+    function clearAll() {
+        document.getElementById('email-content').value = '';
+        document.getElementById('bulk-emails').value = '';
+        document.getElementById('bulk-file').value = null;
+        document.getElementById('initial-message').innerHTML = `<p class="text-gray-500 text-lg text-center">Results will be displayed here.<br>Paste an email and click "Initiate Scan".</p>`;
+        document.getElementById('initial-message').classList.remove('hidden');
+        document.getElementById('analysis-content').classList.add('hidden');
+        document.getElementById('bulk-results').classList.add('hidden');
+        lastEmailText = '';
+        document.getElementById('feedback-prompt').textContent = 'Report an incorrect analysis to improve the AI model.';
+        document.getElementById('feedback-prompt').style.color = '';
+        document.getElementById('feedback-prompt').classList.remove('hidden');
+        document.getElementById('feedback-message').classList.add('hidden');
+        document.getElementById('feedback-buttons').classList.remove('hidden');
+    }
+        
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            if (document.activeElement.id === 'email-content' && document.getElementById('email-content').value) {
+                analyzeEmail();
+            }
+        }
+    });
+    </script>
+</body>
+</html>
