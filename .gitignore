@@ -1,0 +1,27 @@
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Jupyter / IPython
+.ipynb_checkpoints
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Feedback data (user data)
+feedback_data.csv
+
+# Model artifacts (optional: if large, can use Git LFS)
+models/final/*.joblib
+models/embeddings.pkl
