@@ -25,5 +25,4 @@ requests~=2.31.0
 Flask-SQLAlchemy~=3.1.0
 psycopg2-binary~=2.9.0
 Flask-Login~=0.6.0
-bcrypt~=4.1.0
-nltk_data
+bcrypt>=4.0.0

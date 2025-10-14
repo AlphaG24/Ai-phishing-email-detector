@@ -91,6 +91,20 @@ GLOBAL_LOAD_SUCCESS = False
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global MODEL, VECTORIZER, GLOBAL_LOAD_SUCCESS
+        print("⬇️ Checking for required NLTK data...")
+    try:
+        import nltk
+        # Create a path for NLTK data within your project
+        nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
+        os.makedirs(nltk_data_path, exist_ok=True)
+        # Add the path to NLTK's data path list
+        nltk.data.path.append(nltk_data_path)
+        
+        # Download the 'punkt' tokenizer data if not already present
+        nltk.download('punkt', download_dir=nltk_data_path, quiet=True)
+        print("✅ NLTK 'punkt' data is ready.")
+    except Exception as e:
+        print(f"⚠️ Warning: Could not download NLTK data: {e}")
     print("🔄 Starting up... Loading model and vectorizer")
     try:
         MODEL = joblib.load(os.path.join(base_dir, "models", "final", "naive_bayes_model.joblib"))
