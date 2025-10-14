@@ -16,7 +16,7 @@ from advanced_features import get_advanced_features
 feature_cols = [
     'num_urls', 'has_suspicious_keywords', 'has_suspicious_title', 
     'has_hidden_images', 'has_suspicious_url_pattern', 
-    'has_high_html_ratio', 'has_common_typos', 'has_spoofed_header',
+    'has_high_html_ratio', 'has_coammon_typos', 'has_spoofed_header',
     'is_newly_registered_domain', 'has_typosquatting_link',
     'has_suspicious_tld', 'has_url_obfuscation', 'has_urgency_language', 'has_poor_grammar'
 ]
