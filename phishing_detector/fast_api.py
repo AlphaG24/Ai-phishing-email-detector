@@ -14,11 +14,27 @@ from contextlib import asynccontextmanager
 import io
 import re
 import logging
+import gdown
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# --- Google Drive model downloader ---
+MODEL_DIR = os.path.join(os.path.dirname(__file__), "models", "final")
+os.makedirs(MODEL_DIR, exist_ok=True)
 
-# --- Import custom modules from src ---
+MODEL_FILES = {
+    "naive_bayes_model.joblib": "1L34TIsh6dsnYK8CVV9hn5QdBrnnPcU3H",
+    "semantic_model.joblib": "1KMQYQgGI5cWori75eYlanKR4P8gSEbyl",
+    "tfidf_vectorizer_advanced.joblib": "1oP_Jy8Da-2zI-R4-VEq5MGhMarrZO92x",
+}
+
+for filename, file_id in MODEL_FILES.items():
+    file_path = os.path.join(MODEL_DIR, filename)
+    if not os.path.exists(file_path):
+        logger.info(f"⬇️ Downloading {filename} from Google Drive...")
+        gdown.download(f"https://drive.google.com/uc?id={file_id}", file_path, quiet=False)
+
 try:
     base_dir = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.join(base_dir, 'src'))
