@@ -91,7 +91,7 @@ GLOBAL_LOAD_SUCCESS = False
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global MODEL, VECTORIZER, GLOBAL_LOAD_SUCCESS
-        print("⬇️ Checking for required NLTK data...")
+    print("⬇️ Checking for required NLTK data...")
     try:
         import nltk
         # Create a path for NLTK data within your project
