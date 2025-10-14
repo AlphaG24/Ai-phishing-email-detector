@@ -14,6 +14,7 @@ MODEL_FILE = "models/final/naive_bayes_model.joblib"
 VECTORIZER_FILE = "models/final/tfidf_vectorizer_advanced.joblib"
 HISTORY_FILE = "models/final/retrained_ids.csv"  # Track already used feedback
 
+print("RUNNING NEW VERSION")
 def retrain_model():
     """Retrain model with new feedback data"""
     try:
