@@ -33,9 +33,22 @@ jobs:
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} +
+      
+       # Add this step to your workflow
+      - name: Debug - Check the retrain_model.py file
+        run: |
+          echo "=== Checking the actual content of the file ==="
+          cat phishing_detector/src/retrain_model.py
+          echo "=== Checking for the problematic pattern '@app.post' ==="
+          if grep -n "@app.post" phishing_detector/src/retrain_model.py; then
+            echo "❌ ERROR: The old code IS still present in the file."
+            exit 1
+           else
+            echo "✅ No trace of '@app.post' found in the file."
+            fi   
 
       # 5️⃣ Run retraining script
-            # 5️⃣ Run retraining script only if feedback data exists
+          
       - name: Run retraining
         id: retrain
         run: |
@@ -54,3 +67,4 @@ jobs:
           git add models/final/naive_bayes_model.joblib models/final/tfidf_vectorizer_advanced.joblib
           git commit -m "🤖 Auto-update: retrained model"
           git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/AlphaG24/Ai-phishing-email-detector.git main || echo "⚠️ Nothing to commit"
+          
