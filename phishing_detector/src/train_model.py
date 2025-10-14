@@ -13,6 +13,16 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from data_processor import clean_text
 from advanced_features import get_advanced_features
 
+feature_cols = [
+    'num_urls', 'has_suspicious_keywords', 'has_suspicious_title', 
+    'has_hidden_images', 'has_suspicious_url_pattern', 
+    'has_high_html_ratio', 'has_common_typos', 'has_spoofed_header',
+    'is_newly_registered_domain', 'has_typosquatting_link',
+    'has_suspicious_tld', 'has_url_obfuscation', 'has_urgency_language', 'has_poor_grammar'
+]
+
+vectorizer = TfidfVectorizer(max_features=50000, stop_words='english')
+
 def train_mnb_model():
     """
     Train Multinomial Naive Bayes model with TF-IDF + 10 advanced features
@@ -40,13 +50,7 @@ def train_mnb_model():
     advanced_features_df = pd.DataFrame(advanced_features_list)
     
     # Define your 10 feature columns
-    feature_cols = [
-    'num_urls', 'has_suspicious_keywords', 'has_suspicious_title', 
-    'has_hidden_images', 'has_suspicious_url_pattern', 
-    'has_high_html_ratio', 'has_common_typos', 'has_spoofed_header',
-    'is_newly_registered_domain', 'has_typosquatting_link',
-    'has_suspicious_tld', 'has_url_obfuscation', 'has_urgency_language', 'has_poor_grammar'
-]
+    
     # Ensure all feature columns exist
     for col in feature_cols:
         if col not in advanced_features_df.columns:
@@ -55,7 +59,7 @@ def train_mnb_model():
     
     print("🔡 Step 4: Creating TF-IDF features...")
     # Create TF-IDF features from text (50,000 features)
-    vectorizer = TfidfVectorizer(max_features=50000, stop_words='english')
+    
     X_text = vectorizer.fit_transform(df['cleaned_text'])
     
     # Get advanced features
