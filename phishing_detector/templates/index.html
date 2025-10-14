@@ -155,13 +155,11 @@
     </footer>
 
     <script>
-    
-    const API_URL = 'https://ai-phishing-email-detector-n4h5.onrender.com/predict';
-    const FEEDBACK_URL = 'https://ai-phishing-email-detector-n4h5.onrender.com/feedback';
-    const BULK_API_URL = 'https://ai-phishing-email-detector-n4h5.onrender.com/bulk_predict';
-    const BULK_UPLOAD_URL = 'https://ai-phishing-email-detector-n4h5.onrender.com/bulk_upload';
-
-
+    // Use relative URLs to work with any domain
+    const API_URL = '/predict';
+    const FEEDBACK_URL = '/feedback';
+    const BULK_API_URL = '/bulk_predict';
+    const BULK_UPLOAD_URL = '/bulk_upload';
     
     let lastEmailText = '';
     
@@ -210,7 +208,7 @@
             displayResults(data);
         } catch (error) {
             console.error('Analysis failed:', error);
-            initialMessage.innerHTML = `<div class="text-center"><p class="text-lg font-semibold text-red-500">Analysis Failed</p><p class="text-sm text-gray-500 mt-2">Could not connect to the analysis engine.</p><p class="text-xs text-gray-400 mt-1">Ensure server is running at http://127.0.0.1:5000.</p></div>`;
+            initialMessage.innerHTML = `<div class="text-center"><p class="text-lg font-semibold text-red-500">Analysis Failed</p><p class="text-sm text-gray-500 mt-2">Could not connect to the analysis engine.</p><p class="text-xs text-gray-400 mt-1">Error: ${error.message}</p></div>`;
         } finally {
             loadingMessage.classList.add('hidden');
         }
@@ -367,37 +365,50 @@
         }
     }
 
-    function displayBulkResults(data, source) {
-        const bulkContent = document.getElementById('bulk-results-content');
-        let resultsHtml = `
-            <div class="mb-4 p-3 bg-gray-100 rounded-md text-sm">
-                <strong>Source:</strong> ${source}<br>
-                <strong>Summary:</strong> ${data.total_processed} processed | 
-                <span class="font-bold text-orange-600">${data.phishing_count} Phishing</span> | 
-                <span class="font-bold text-green-600">${data.legitimate_count} Legitimate</span>
-            </div>
-            <div class="space-y-2">`;
+   function displayBulkResults(data, source) {
+    const bulkContent = document.getElementById('bulk-results-content');
+    let resultsHtml = `
+        <div class="mb-4 p-3 bg-gray-100 rounded-md text-sm">
+            <strong>Source:</strong> ${source}<br>
+            <strong>Summary:</strong> ${data.total_processed} total | 
+            ${data.successful_processing} successful | 
+            ${data.failed_processing} failed<br>
+            <strong>Classification:</strong> 
+            <span class="font-bold text-orange-600">${data.phishing_count} Phishing</span> | 
+            <span class="font-bold text-green-600">${data.legitimate_count} Legitimate</span>
+        </div>
+        <div class="space-y-2">`;
+    
+    data.results.forEach((result, index) => {
+        let badgeClass, badgeText, confidenceText;
         
-        data.results.forEach((result, index) => {
-            const badgeClass = result.prediction === 'PHISHING' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800';
-            const confidencePercent = (result.confidence * 100).toFixed(1);
-            
-            resultsHtml += `
-                <div class="border-t border-gray-200 py-2 flex justify-between items-center text-sm">
-                    <div>
-                        <div class="font-bold text-gray-700">Entry ${index + 1}</div>
-                        <div class="text-xs text-gray-500 truncate max-w-xs">${result.email_preview}</div>
-                    </div>
-                    <div class="text-right">
-                        <span class="${badgeClass} px-2 py-1 rounded-md text-xs font-bold">${result.prediction}</span>
-                        <div class="text-xs text-gray-500 mt-1">${confidencePercent}%</div>
-                    </div>
-                </div>`;
-        });
+        if (result.status === "error") {
+            badgeClass = 'bg-red-100 text-red-800';
+            badgeText = 'ERROR';
+            confidenceText = 'N/A';
+        } else {
+            badgeClass = result.prediction === 'PHISHING' ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800';
+            badgeText = result.prediction;
+            confidenceText = (result.confidence * 100).toFixed(1) + '%';
+        }
         
-        resultsHtml += `</div>`;
-        bulkContent.innerHTML = resultsHtml;
-    }
+        resultsHtml += `
+            <div class="border-t border-gray-200 py-2 flex justify-between items-center text-sm">
+                <div>
+                    <div class="font-bold text-gray-700">Entry ${index + 1}</div>
+                    <div class="text-xs text-gray-500 truncate max-w-xs">${result.email_preview}</div>
+                    ${result.status === "error" ? `<div class="text-xs text-red-500 mt-1">${result.error_message}</div>` : ''}
+                </div>
+                <div class="text-right">
+                    <span class="${badgeClass} px-2 py-1 rounded-md text-xs font-bold">${badgeText}</span>
+                    <div class="text-xs text-gray-500 mt-1">${confidenceText}</div>
+                </div>
+            </div>`;
+    });
+    
+    resultsHtml += `</div>`;
+    bulkContent.innerHTML = resultsHtml;
+}
 
     function clearAll() {
         document.getElementById('email-content').value = '';

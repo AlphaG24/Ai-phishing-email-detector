@@ -102,12 +102,32 @@ app.add_middleware(
 # --- Static Files ---
 app.mount("/static", StaticFiles(directory=os.path.join(base_dir, "static")), name="static")
 
+# Serve frontend for all routes to support SPA
 @app.get("/")
 async def serve_frontend():
     index_path = os.path.join(base_dir, "templates", "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
     raise HTTPException(status_code=404, detail="Frontend not found. Make sure templates/index.html exists.")
+
+# Catch-all route for SPA routing
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+    # Check if it's an API route
+    if full_path.startswith(('predict', 'feedback', 'bulk', 'health')):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # Serve static files if they exist
+    static_path = os.path.join(base_dir, "static", full_path)
+    if os.path.exists(static_path):
+        return FileResponse(static_path)
+    
+    # Otherwise serve the main page (for SPA routing)
+    index_path = os.path.join(base_dir, "templates", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    raise HTTPException(status_code=404, detail="Resource not found")
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -146,22 +166,27 @@ async def predict_email(data: EmailInput):
             }
     if not GLOBAL_LOAD_SUCCESS:
         raise HTTPException(status_code=500, detail="AI Model assets failed to load.")
-    cleaned_text = clean_text(data.email_text)
-    advanced_features_dict = get_advanced_features(data.email_text)
-    final_features = {col: advanced_features_dict.get(col, 0) for col in FEATURE_COLS}
-    text_vectorized = VECTORIZER.transform([cleaned_text])
-    advanced_features_array = pd.DataFrame([final_features])[FEATURE_COLS].to_numpy()
-    X_combined = hstack([text_vectorized, advanced_features_array])
-    prediction = MODEL.predict(X_combined)[0]
-    prediction_proba = MODEL.predict_proba(X_combined)[0]
-    label = "PHISHING" if prediction == 1 else "LEGITIMATE"
-    confidence = float(prediction_proba[prediction])
-    return {
-        "prediction": label,
-        "confidence": round(confidence, 4),
-        "input_features": advanced_features_dict,
-        "explanation": generate_explanation(advanced_features_dict, prediction)
-    }
+    
+    try:
+        cleaned_text = clean_text(data.email_text)
+        advanced_features_dict = get_advanced_features(data.email_text)
+        final_features = {col: advanced_features_dict.get(col, 0) for col in FEATURE_COLS}
+        text_vectorized = VECTORIZER.transform([cleaned_text])
+        advanced_features_array = pd.DataFrame([final_features])[FEATURE_COLS].to_numpy()
+        X_combined = hstack([text_vectorized, advanced_features_array])
+        prediction = MODEL.predict(X_combined)[0]
+        prediction_proba = MODEL.predict_proba(X_combined)[0]
+        label = "PHISHING" if prediction == 1 else "LEGITIMATE"
+        confidence = float(prediction_proba[prediction])
+        return {
+            "prediction": label,
+            "confidence": round(confidence, 4),
+            "input_features": advanced_features_dict,
+            "explanation": generate_explanation(advanced_features_dict, prediction)
+        }
+    except Exception as e:
+        logger.error(f"Error in single email prediction: {e}")
+        raise HTTPException(status_code=500, detail=f"Error processing email: {str(e)}")
 
 # --- Feedback Endpoint ---
 @app.post("/feedback")
@@ -178,15 +203,13 @@ async def receive_feedback(data: FeedbackInput):
         raise HTTPException(status_code=500, detail=f"Could not save feedback: {e}")
 
 # --- Bulk Upload (TXT/CSV file) ---
-import re  # add near top of file
-
-# ... inside your file (replace existing bulk_upload) ...
 @app.post("/bulk_upload")
 async def bulk_upload_file(file: UploadFile = File(...)):
     if not GLOBAL_LOAD_SUCCESS:
         raise HTTPException(status_code=500, detail="AI Model assets not loaded.")
     if not file.filename.endswith(('.txt', '.csv')):
         raise HTTPException(status_code=400, detail="Only TXT and CSV files are supported")
+    
     try:
         content = await file.read()
         content_str = content.decode('utf-8', errors='ignore')
@@ -212,7 +235,7 @@ async def bulk_upload_file(file: UploadFile = File(...)):
             raise HTTPException(status_code=400, detail="No valid emails found in file")
 
         results = []
-        phishing_count = legitimate_count = 0
+        phishing_count = legitimate_count = error_count = 0
 
         for i, email_text in enumerate(emails):
             if not email_text or not str(email_text).strip():
@@ -228,6 +251,7 @@ async def bulk_upload_file(file: UploadFile = File(...)):
                 prediction_proba = MODEL.predict_proba(X_combined)[0]
                 label = "PHISHING" if prediction == 1 else "LEGITIMATE"
                 confidence = float(prediction_proba[prediction])
+                
                 if prediction == 1:
                     phishing_count += 1
                 else:
@@ -237,15 +261,27 @@ async def bulk_upload_file(file: UploadFile = File(...)):
                     "email_preview": email_text[:200] + ("..." if len(email_text) > 200 else ""),
                     "prediction": label,
                     "confidence": confidence,
-                    "features": advanced_features_dict
+                    "features": advanced_features_dict,
+                    "status": "success"
                 })
+                
             except Exception as e:
-                # log and continue (don't break whole job)
                 logger.warning(f"⚠️ Error processing email {i}: {e}")
+                error_count += 1
+                results.append({
+                    "email_preview": email_text[:200] + ("..." if len(email_text) > 200 else ""),
+                    "prediction": "ERROR",
+                    "confidence": 0.0,
+                    "features": {},
+                    "status": "error",
+                    "error_message": str(e)
+                })
                 continue
 
         return {
             "total_processed": len(results),
+            "successful_processing": len(results) - error_count,
+            "failed_processing": error_count,
             "phishing_count": phishing_count,
             "legitimate_count": legitimate_count,
             "results": results,
@@ -262,8 +298,9 @@ async def bulk_upload_file(file: UploadFile = File(...)):
 async def bulk_predict(data: BulkEmailInput):
     if not GLOBAL_LOAD_SUCCESS:
         raise HTTPException(status_code=500, detail="Model assets not loaded.")
+    
     results = []
-    phishing_count = legitimate_count = 0
+    phishing_count = legitimate_count = error_count = 0
 
     for i, email_text in enumerate(data.emails):
         if not email_text or not str(email_text).strip():
@@ -279,6 +316,7 @@ async def bulk_predict(data: BulkEmailInput):
             prediction_proba = MODEL.predict_proba(X_combined)[0]
             label = "PHISHING" if prediction == 1 else "LEGITIMATE"
             confidence = float(prediction_proba[prediction])
+            
             if prediction == 1:
                 phishing_count += 1
             else:
@@ -288,14 +326,27 @@ async def bulk_predict(data: BulkEmailInput):
                 "email_preview": email_text[:200] + ("..." if len(email_text) > 200 else ""),
                 "prediction": label,
                 "confidence": confidence,
-                "features": advanced_features_dict
+                "features": advanced_features_dict,
+                "status": "success"
             })
+            
         except Exception as e:
             logger.warning(f"⚠️ Error processing email {i}: {e}")
+            error_count += 1
+            results.append({
+                "email_preview": email_text[:200] + ("..." if len(email_text) > 200 else ""),
+                "prediction": "ERROR",
+                "confidence": 0.0,
+                "features": {},
+                "status": "error",
+                "error_message": str(e)
+            })
             continue
 
     return {
         "total_processed": len(results),
+        "successful_processing": len(results) - error_count,
+        "failed_processing": error_count,
         "phishing_count": phishing_count,
         "legitimate_count": legitimate_count,
         "results": results
