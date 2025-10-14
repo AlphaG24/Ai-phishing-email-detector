@@ -19,6 +19,23 @@ import gdown
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# --- NLTK Data Download (CRITICAL FIX) ---
+print("⬇️ Downloading required NLTK data...")
+try:
+    import nltk
+    # Create a path for NLTK data within your project
+    nltk_data_path = os.path.join(os.path.dirname(__file__), 'nltk_data')
+    os.makedirs(nltk_data_path, exist_ok=True)
+    # Add the path to NLTK's data path list
+    nltk.data.path.append(nltk_data_path)
+    
+    # Download the 'punkt' tokenizer data
+    nltk.download('punkt', download_dir=nltk_data_path, quiet=True)
+    print("✅ NLTK 'punkt' data downloaded successfully.")
+except Exception as e:
+    print(f"❌ Failed to download NLTK data: {e}")
+    # Don't exit, but the model might not work properly
+
 # --- Google Drive model downloader ---
 MODEL_DIR = os.path.join(os.path.dirname(__file__), "models", "final")
 os.makedirs(MODEL_DIR, exist_ok=True)
