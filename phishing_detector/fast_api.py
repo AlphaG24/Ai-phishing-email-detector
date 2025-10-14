@@ -16,6 +16,7 @@ import re
 import logging
 import gdown
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ async def lifespan(app: FastAPI):
         
         # Download the 'punkt' tokenizer data if not already present
         nltk.download('punkt', download_dir=nltk_data_path, quiet=True)
+        nltk.download('stopwords', download_dir=nltk_data_path, quiet=True)
         print("✅ NLTK 'punkt' data is ready.")
     except Exception as e:
         print(f"⚠️ Warning: Could not download NLTK data: {e}")
