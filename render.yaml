@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: ai-phishing-email-detector
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn phishing_detector.fast_api:app --host 0.0.0.0 --port 10000
