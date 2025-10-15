@@ -30,14 +30,9 @@ env/
 Thumbs.db
 
 # ------------------------------
-# Feedback / sensitive user data
-# ------------------------------
-feedback_data.csv
-
-# ------------------------------
 # Models / large binary artifacts
 # ------------------------------
-models/final/*.joblib
+
 models/embeddings.pkl
 
 # ------------------------------
