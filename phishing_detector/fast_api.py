@@ -115,36 +115,22 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.responses import Response
+
+
 # --- Static Files ---
 app.mount("/static", StaticFiles(directory=os.path.join(base_dir, "static")), name="static")
 
-# Serve frontend for all routes to support SPA
-@app.get("/")
-async def serve_frontend():
-    index_path = os.path.join(base_dir, "templates", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    raise HTTPException(status_code=404, detail="Frontend not found. Make sure templates/index.html exists.")
+# --- Serve SPA frontend properly ---
+# Mount the templates folder as a StaticFiles app with html=True
+app.mount("/", StaticFiles(directory=os.path.join(base_dir, "templates"), html=True), name="frontend")
 
-# Catch-all route for SPA routing
-@app.get("/{full_path:path}")
-async def catch_all(full_path: str):
-    # Check if it's an API route
-    if full_path.startswith(('predict', 'feedback', 'bulk', 'health')):
-        raise HTTPException(status_code=404, detail="API endpoint not found")
-    
-    # Serve static files if they exist
-    static_path = os.path.join(base_dir, "static", full_path)
-    if os.path.exists(static_path):
-        return FileResponse(static_path)
-    
-    # Otherwise serve the main page (for SPA routing)
-    index_path = os.path.join(base_dir, "templates", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    
-    raise HTTPException(status_code=404, detail="Resource not found")
+# Support Render health check HEAD request
+@app.head("/")
+async def head_frontend():
+    return Response(status_code=200)
 
+# Optional: favicon route
 @app.get("/favicon.ico")
 async def favicon():
     return FileResponse(os.path.join(base_dir, "static", "favicon.ico"))
