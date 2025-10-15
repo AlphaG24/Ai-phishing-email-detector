@@ -10,9 +10,9 @@ from advanced_features import get_advanced_features
 from train_model import clean_text, feature_cols, vectorizer
 
 FEEDBACK_FILE = 'feedback_data.csv'
-MODEL_FILE = "models/final/naive_bayes_model.joblib"
-VECTORIZER_FILE = "models/final/tfidf_vectorizer_advanced.joblib"
-HISTORY_FILE = "models/final/retrained_ids.csv"  # Track already used feedback
+MODEL_FILE = "phishing_detector/models/final/naive_bayes_model.joblib"
+VECTORIZER_FILE = "phishing_detector/models/final/tfidf_vectorizer_advanced.joblib"
+HISTORY_FILE = "phishing_detector/models/final/retrained_ids.csv"
 
 print("RUNNING NEW VERSION")
 def retrain_model():
