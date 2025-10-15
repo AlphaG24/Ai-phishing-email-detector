@@ -5,7 +5,7 @@ import pandas as pd
 from scipy.sparse import hstack
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import csv
@@ -115,25 +115,42 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from fastapi.responses import Response
-
-
 # --- Static Files ---
 app.mount("/static", StaticFiles(directory=os.path.join(base_dir, "static")), name="static")
 
 # --- Serve SPA frontend properly ---
-# Mount the templates folder as a StaticFiles app with html=True
-app.mount("/", StaticFiles(directory=os.path.join(base_dir, "templates"), html=True), name="frontend")
+@app.api_route("/", methods=["GET", "HEAD"])
+async def serve_frontend():
+    index_path = os.path.join(base_dir, "templates", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    raise HTTPException(status_code=404, detail="Frontend not found")
 
-# Support Render health check HEAD request
-@app.head("/")
-async def head_frontend():
-    return Response(status_code=200)
+# Catch-all route for SPA routing - MUST COME AFTER ALL API ROUTES
+@app.api_route("/{full_path:path}", methods=["GET", "HEAD"])
+async def catch_all(full_path: str):
+    # Check if it's an API route that doesn't exist
+    if full_path.startswith(('predict', 'feedback', 'bulk', 'health')):
+        raise HTTPException(status_code=404, detail="API endpoint not found")
+    
+    # Serve static files if they exist
+    static_path = os.path.join(base_dir, "static", full_path)
+    if os.path.exists(static_path):
+        return FileResponse(static_path)
+    
+    # Otherwise serve the main page (for SPA routing)
+    index_path = os.path.join(base_dir, "templates", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    
+    raise HTTPException(status_code=404, detail="Resource not found")
 
-# Optional: favicon route
 @app.get("/favicon.ico")
 async def favicon():
-    return FileResponse(os.path.join(base_dir, "static", "favicon.ico"))
+    favicon_path = os.path.join(base_dir, "static", "favicon.ico")
+    if os.path.exists(favicon_path):
+        return FileResponse(favicon_path)
+    return Response(status_code=404)
 
 # --- Utility: Explanation Generator ---
 def generate_explanation(input_features: Dict[str, Any], prediction: int) -> List[str]:
@@ -355,7 +372,7 @@ async def bulk_predict(data: BulkEmailInput):
     }
 
 # --- Health Check ---
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {"status": "healthy" if GLOBAL_LOAD_SUCCESS else "unhealthy",
             "model_loaded": GLOBAL_LOAD_SUCCESS,
