@@ -10,59 +10,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      # 2️⃣ Set up Python
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
 
-      # 3️⃣ Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r phishing_detector/requirements.txt
 
-      # 4️⃣ Clean __pycache__ and .pyc files
-      - name: Clean cache
+      - name: Clean __pycache__ and .pyc files
         run: |
           find . -name "*.pyc" -delete
           find . -name "__pycache__" -type d -exec rm -rf {} +
-      
-      # 🧩 Debug - Verify file content
-      - name: Debug - Check retrain_model.py
-        run: |
-          echo "=== Checking retrain_model.py ==="
-          cat phishing_detector/src/retrain_model.py
-          echo "=== Searching for '@app.post' ==="
-          if grep -n "@app.post" phishing_detector/src/retrain_model.py; then
-            echo "❌ ERROR: Found legacy @app.post line"
-            exit 1
-          else
-            echo "✅ No '@app.post' line found"
-          fi
 
-      # 5️⃣ Run retraining script
+      - name: Debug - show retrain_model.py (confirm correct file)
+        run: |
+          echo "=== retrain_model.py content ==="
+          sed -n '1,200p' phishing_detector/src/retrain_model.py || true
+          echo "=== end file ==="
+
+      # Run retraining only if feedback_data.csv exists.
+      # Step sets outputs 'retrained' and 'skipped' via GITHUB_OUTPUT.
       - name: Run retraining
         id: retrain
         run: |
           if [ -f feedback_data.csv ]; then
-            python phishing_detector/src/retrain_model.py
+            echo "📌 feedback_data.csv found — running retrain_model.py"
+            # run retrain; exit code 0 indicates success
+            if python phishing_detector/src/retrain_model.py; then
+              echo "retrained=true" >> $GITHUB_OUTPUT
+              echo "skipped=false" >> $GITHUB_OUTPUT
+            else
+              echo "retrained=false" >> $GITHUB_OUTPUT
+              echo "skipped=false" >> $GITHUB_OUTPUT
+              # non-zero exit will mark job step failed; we still propagate outputs
+              exit 1
+            fi
           else
-            echo "⚠️ No feedback data found. Skipping retraining."
+            echo "⚠️ feedback_data.csv NOT found — skipping retrain"
+            echo "retrained=false" >> $GITHUB_OUTPUT
+            echo "skipped=true" >> $GITHUB_OUTPUT
           fi
 
-      # 6️⃣ Commit and push updated model
-      - name: Commit retrained model
-        if: success()
+      # Debug: list the model files (if any) so logs show what exists on runner
+      - name: Debug - list model files
+        if: always()
         run: |
+          echo "Listing phishing_detector/models/final/"
+          ls -la phishing_detector/models/final/ || echo "No models folder present"
+
+      # Commit and push updated model only when retraining succeeded AND model files exist.
+      - name: Commit retrained model
+        if: steps.retrain.outputs.retrained == 'true' && hashFiles('phishing_detector/models/final/naive_bayes_model.joblib') != ''
+        run: |
+          echo "🧠 Retrain reported success and model file exists — committing models"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add phishing_detector/models/final/naive_bayes_model.joblib phishing_detector/models/final/tfidf_vectorizer_advanced.joblib
+          git add phishing_detector/models/final/naive_bayes_model.joblib phishing_detector/models/final/tfidf_vectorizer_advanced.joblib || echo "⚠️ No model files to add"
           git commit -m "🤖 Auto-update: retrained model" || echo "⚠️ Nothing to commit"
-          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/AlphaG24/Ai-phishing-email-detector.git main || echo "⚠️ Push skipped"
+          # Push via token from secret
+          git push https://x-access-token:${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/AlphaG24/Ai-phishing-email-detector.git main || echo "⚠️ Push failed or nothing to push"
